@@ -1,7 +1,7 @@
 # auth
 an implementation of authentication using nodejs  
 
-######install dependencies  
+###### install dependencies  
 ```
 npm install
 ```
