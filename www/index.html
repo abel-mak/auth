@@ -1,0 +1,28 @@
+<html>
+<head>
+    <link rel="stylesheet" href="/static/generale.css">
+</head>
+<body>
+<div class="header">
+	<a class="hdr-elem" id="logout">Logout</a>
+</div>
+<h1>
+	Hey ### 👋 it's index.html
+</h1>
+<script>
+	let logout = document.querySelector("#logout");
+
+	logout.addEventListener("click", () =>
+			{
+				fetch("/logout", 
+						{
+							method:"POST",
+							cookie:document.cookie
+				
+						})
+				.then(() => location.reload())
+				.catch(err => console.log(err));
+			})
+</script>
+</body>
+</html>

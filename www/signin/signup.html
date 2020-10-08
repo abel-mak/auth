@@ -1,0 +1,36 @@
+<html>    
+
+    </head>
+    <link rel="stylesheet" href="/static/generale.css">
+    </head>
+    <body>
+	<div class="header">
+		<a class = "hdr-elem" id="login" href="/login/login.html" >Login</a>
+		<a class = "hdr-elem" id="signup" href="/signin/signup.html" >Signup</a>
+	</div>
+	<h1>
+	    Hey 👋 it's signup.html
+	</h1>
+	<div style="height:2em; transition:1s" id="message"></div>
+	<form>
+	<label>username:</label><br>
+	<input type="text" name="username" required><br>
+	<label>password:</label><br>
+	<input type="password" name="password"required><br>
+	<label>confirm password:</label><br>
+	<input type="password"name="cpassword" required><br>
+	<input type="submit" value="submit"><br>
+	</form>
+	<script src="/static/signup.js">
+	</script>
+	<script>
+	let pathname = window.location.pathname;
+	   
+	window.onload = function ()
+	{
+        	document.querySelector(`a[href='${pathname}']`).classList.add("el-active")
+	}
+	</script>
+	</script>
+	</body>
+</html>
