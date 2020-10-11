@@ -1,6 +1,5 @@
 let sqlite = require("sqlite3").verbose();
 let log = console.log
-const md5 = require("md5");
 
 function insert(/**object*/user)
 {

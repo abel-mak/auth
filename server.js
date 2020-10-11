@@ -3,7 +3,7 @@ const http = require("http");
 const url = require("url");
 const {is_exist, check_creds, insert, is_loggedin, get_cookie, destroy_cookie, get_user_by_cookie} = require("./database.js");
 const query = require("querystring");
-const md5 = require("md5");
+const sha256 = require("crypto-js/sha256");
 const fs = require("fs");
 const root = "./www";
 const PORT = 8081;
@@ -20,7 +20,7 @@ async function get(req, res, path)
 	let user;
 
 	cookie = query.parse(req.headers.cookie).cookie;
-	user = await get_user_by_cookie(cookie);
+	user = await get_user_by_cookie(cookie).catch((err) => res.int_error(err));
 	/*if unathenticate and wanna access restricted path*/
 	if (path.startsWith("/static/") == false && !path.startsWith("/login/") 
 		&& !path.startsWith("/signup/")&& (user == undefined || cookie == null))
@@ -48,22 +48,27 @@ async function login(req, res, body)
 	let user;
 	let creds;
 
-	//console.log(user.username, user.password);
 	res.setHeader("Content-Type", "text/html ; charset=utf8");
 	user = JSON.parse(body);
-	user.password = md5(user.password);
-	creds = await check_creds(user).catch(err => res.int_error(err));
-	if (await is_exist(user.username).catch(err => res.int_error(err)) == true  
-			&& creds == true)
+	user.password = sha256(user.password).toString();
+	try
 	{
-		cookie = await get_cookie(user);
-		res.set_cookie(cookie);
-		//console.log("cookie=" + cookie);
-		res.end(JSON.stringify({err:null, message:`🎉 welcome at 🏡 ${user.username}`}));
+		creds = await check_creds(user)
+		if (await is_exist(user.username) == true 
+				&& creds == true)
+		{
+			cookie = await get_cookie(user);
+			res.set_cookie(cookie);
+			res.end(JSON.stringify({err:null, message:`🎉 welcome at 🏡 ${user.username}`}));
+		}
+		else if (creds == false)
+			res.end(JSON.stringify(
+				{err:"wrong creds", message:`😏 wrong username or password`}));
 	}
-	else if (creds == false)
-		res.end(JSON.stringify(
-			{err:"wrong creds", message:`😏 wrong username or password`}));
+	catch(err)
+	{
+		res.int_error(err);
+	}
 }
 
 function logout(req, res, body)
@@ -87,21 +92,27 @@ async function signup(req, res, body)
 		username:body.username,
 		password:body.password
 	};
-	is_username_used = await is_exist(body.username).catch(err => res.int_error(err));
-	if (body.username != "" && body.password != "" && is_username_used == false)
+	try
 	{
-		user.password = md5(user.password);
-		insert(user)
-		.then(()=> 
-			{
-				res.end(JSON.stringify({err:null, 
-						message:"successfully signed up you can now login"}));
-			})
-		.catch(err => res.int_error(err));
+		is_username_used = await is_exist(body.username)
+		if (body.username != "" && body.password != "" && is_username_used == false)
+		{
+			user.password = sha256(user.password).toString();
+			insert(user)
+			.then(()=> 
+				{
+					res.end(JSON.stringify({err:null, 
+							message:"successfully signed up you can now login"}));
+				})
+		}
+		else if (is_username_used == true)
+			res.end(JSON.stringify({err:"used username" ,
+						message:"The username " + body.username + " is taken"}));
 	}
-	else if (is_username_used == true)
-		res.end(JSON.stringify({err:"used username" ,
-					message:"The username " + body.username + " is taken"}));
+	catch(err)
+	{
+		res.int_error(err);
+	}
 }
 
 function add_functions(request, response)
@@ -157,7 +168,6 @@ const server = http.createServer((req, res) =>
 
 			[req, res] = add_functions(req, res);
 			path = url.parse(req.url).path;
-			//console.log(url.parse(req.url))
 			console.log(req.method + ":" + req.url);
 			if (req.method == "GET" && (path == "/" || path.endsWith(".html") 
 						|| path.endsWith(".js") || path.endsWith(".css")))
